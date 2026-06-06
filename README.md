@@ -1,119 +1,93 @@
-# 🤖 Multi-Agent Research System
+# Multi-Agent Research System
 
-> A production-grade multi-agent AI system where 5 specialised agents collaborate in sequence to produce comprehensive, quality-scored research reports.
+A Streamlit application where five specialised AI agents collaborate in sequence to produce comprehensive, quality-scored research reports on any topic. Each agent has a distinct role: planning, researching, analysing, writing, and quality-reviewing. All agents run on Groq's Llama 3 inference API, which is free to use.
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue?style=flat-square)
-![LangChain](https://img.shields.io/badge/LangChain-Latest-green?style=flat-square)
-![Streamlit](https://img.shields.io/badge/Streamlit-Latest-red?style=flat-square)
-![Groq](https://img.shields.io/badge/Groq-Llama3-orange?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
+## How it works
 
-## 🚀 Live Demo
+The pipeline is strictly sequential — each agent receives the outputs of all prior agents as context:
 
-**[👉 Try it live here](https://your-app.streamlit.app)** ← Update after deployment
+1. Planner: decomposes the topic into five structured research questions and defines a research approach
+2. Researcher: investigates each question with detailed findings, facts, context, and examples
+3. Analyst: identifies patterns, trends, critical insights, contradictions, and assigns a confidence level
+4. Writer: synthesises all prior outputs into a structured research report with executive summary, key findings, and conclusions
+5. Critic: reviews the report across five quality dimensions and assigns an overall score out of 10
 
----
+The final output is a downloadable Markdown or plain-text research report with a quality score.
 
-## 🏗️ Agent Architecture
+## Live demo
 
-```
-User Input (Research Topic)
-         │
-         ▼
-┌─────────────────┐
-│  🗺️  PLANNER    │  Breaks topic into 5 structured research questions
-│   Agent #1      │  + identifies key focus areas + defines approach
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  🔬 RESEARCHER  │  Investigates each question with detailed findings
-│   Agent #2      │  + facts, context, examples, evidence
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  📊  ANALYST    │  Identifies patterns, trends, critical insights
-│   Agent #3      │  + confidence assessment + gap analysis
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  ✍️   WRITER    │  Synthesises everything into a polished report
-│   Agent #4      │  + executive summary + structured sections
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  🔍   CRITIC    │  Reviews quality across 5 dimensions
-│   Agent #5      │  + scores 1-10 + strengths + improvements
-└────────┬────────┘
-         │
-         ▼
-  📋 Final Report + Quality Score + Download
-```
+Deploy your own instance for free on Streamlit Community Cloud (see deployment section below).
 
-## ✨ Features
+## Features
 
-- **Live Pipeline Visualisation** — Watch each agent activate in real-time
-- **5 Specialised Agents** — Each with a distinct role and expert prompt
-- **Quality Scoring** — Automated 10-point review by the Critic agent
-- **Research History** — Track all sessions with scores in sidebar
-- **Export Reports** — Download as Markdown or plain text
-- **Full Transparency** — View raw output from every agent
+- Live pipeline visualisation showing each agent's status in real time
+- Per-agent output panel for full transparency into the reasoning chain
+- Quality scoring by the Critic agent across completeness, accuracy, clarity, structure, and analytical depth
+- Session history tracking all research topics and scores
+- Download reports as Markdown or plain text
 
-## 🛠️ Tech Stack
+## Requirements
 
-| Component | Technology |
-|---|---|
-| Frontend | Streamlit |
-| LLM | Groq (Llama3-8b-8192) |
-| Agent Orchestration | Custom sequential pipeline |
-| Prompt Engineering | Role-based expert prompts |
-| Language | Python 3.9+ |
+- Python 3.9 or later
+- A free Groq API key from https://console.groq.com
 
-## ⚡ Quick Start
+## Local setup
 
 ```bash
-# Clone
-git clone https://github.com/LAKSHAY-ATREJA/multi-agent-research-system
+git clone https://github.com/LAKSHAY-ATREJA/multi-agent-research-system.git
 cd multi-agent-research-system
 
-# Install
 python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Run
+cp .env.example .env
+# Edit .env and set GROQ_API_KEY=your_key_here
+
 streamlit run app.py
 ```
 
-Get a free Groq API key at [console.groq.com](https://console.groq.com)
+The app opens at http://localhost:8501. Enter your Groq API key in the sidebar (pre-filled if set via .env) and type a research topic to begin.
 
-## 🌐 Deploy to Streamlit Cloud (Free)
+## Environment variables
 
-1. Fork this repo
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub and select this repo
-4. Set `app.py` as the main file
-5. Deploy — live in 2 minutes
+| Variable     | Required | Description                              |
+|--------------|----------|------------------------------------------|
+| GROQ_API_KEY | Yes      | Your Groq API key from console.groq.com  |
 
-## 💡 Example Topics
+## Deployment to Streamlit Community Cloud
 
-- *"The impact of RAG systems on enterprise document processing"*
-- *"Comparing transformer architectures for production NLP"*
-- *"Current state of autonomous AI agents in 2026"*
-- *"Best practices for LLM deployment in regulated industries"*
+1. Fork this repository to your GitHub account
+2. Go to https://share.streamlit.io and sign in with GitHub
+3. Click "New app", select this repository, and set the main file to `app.py`
+4. Under "Advanced settings", add GROQ_API_KEY as a secret
+5. Click "Deploy" — the app is live in about two minutes
 
-## 🔑 Why Multi-Agent vs Single LLM?
+## Example topics
 
-| | Single LLM | Multi-Agent System |
-|---|---|---|
-| Specialisation | Generic | Each agent is an expert |
-| Quality control | None | Critic agent reviews output |
-| Transparency | Black box | Full pipeline visibility |
-| Output quality | Variable | Consistently structured |
+- The impact of RAG systems on enterprise document processing
+- Comparing transformer architectures for production NLP in 2025
+- Current state and limitations of autonomous AI agents
+- Best practices for LLM deployment in regulated industries
+- How vector databases are changing the data infrastructure landscape
 
----
+## Tech stack
 
-Built by [Lakshay Atreja](https://linkedin.com/in/lakshay-atreja) | [GitHub](https://github.com/LAKSHAY-ATREJA)
+| Component          | Technology                    |
+|--------------------|-------------------------------|
+| Frontend           | Streamlit                     |
+| LLM inference      | Groq (Llama 3 8B)             |
+| Agent orchestration| Custom sequential pipeline    |
+| Language           | Python 3.9+                   |
+
+## Project structure
+
+```
+app.py              Streamlit application with agent definitions and pipeline
+requirements.txt    Python dependencies
+.env.example        Template for required environment variables
+```
+
+## License
+
+MIT. Built by Lakshay Atreja.

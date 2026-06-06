@@ -1,7 +1,10 @@
 import os
 import streamlit as st
+from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from datetime import datetime
+
+load_dotenv()
 
 st.set_page_config(
     page_title="Multi-Agent Research System",
@@ -325,18 +328,28 @@ def run_agent(agent, inputs, api_key):
         model_name="llama3-8b-8192",
         temperature=0.4,
         groq_api_key=api_key,
-        max_tokens=1500
+        max_tokens=1500,
     )
-    prompt = agent["prompt"].format(**inputs)
-    return llm.invoke(prompt).content
+    try:
+        prompt = agent["prompt"].format(**inputs)
+        return llm.invoke(prompt).content
+    except KeyError as exc:
+        raise ValueError(f"Agent prompt missing variable: {exc}") from exc
+    except Exception as exc:
+        raise RuntimeError(f"Agent '{agent['id']}' failed: {exc}") from exc
 
 
-def extract_score(critic_text):
+def extract_score(critic_text: str) -> int:
+    import re
+    match = re.search(r"OVERALL SCORE:\s*(\d+)\s*/\s*10", critic_text, re.IGNORECASE)
+    if match:
+        score = int(match.group(1))
+        return max(1, min(10, score))
     for line in critic_text.split("\n"):
         if "OVERALL SCORE:" in line:
             try:
-                return int(line.split(":")[-1].strip().split("/")[0].strip())
-            except:
+                return max(1, min(10, int(line.split(":")[-1].strip().split("/")[0].strip())))
+            except (ValueError, IndexError):
                 pass
     return 7
 
@@ -358,8 +371,15 @@ st.markdown("""
 
 # ── Sidebar ───────────────────────────────────────────────────
 with st.sidebar:
-    st.header("⚙️ Configuration")
-    api_key = st.text_input("Groq API Key", type="password", placeholder="gsk_...", help="Get a free key at console.groq.com")
+    st.header("Configuration")
+    _env_key = os.getenv("GROQ_API_KEY", "")
+    api_key = st.text_input(
+        "Groq API Key",
+        value=_env_key,
+        type="password",
+        placeholder="gsk_...",
+        help="Get a free key at console.groq.com. Can also be set via GROQ_API_KEY env var.",
+    )
 
     st.divider()
     st.header("🏗️ Agent Pipeline")
@@ -460,12 +480,21 @@ if go and topic.strip():
         elif agent["id"] == "critic":
             inputs["writer"] = st.session_state.outputs.get("writer", "")
 
-        output = run_agent(agent, inputs, api_key)
+        try:
+            output = run_agent(agent, inputs, api_key)
+        except Exception as exc:
+            st.error(f"Agent '{agent['name']}' failed: {exc}")
+            containers[agent["id"]].markdown(f"""
+<div class="agent-card" style="background:#fef2f2;border:1px solid #e74c3c;border-radius:14px;padding:1.2rem 1.5rem;margin:0.6rem 0;">
+    <div class="agent-name" style="color:#e74c3c;">Failed: {agent['name']}</div>
+    <div class="agent-role">{exc}</div>
+</div>""", unsafe_allow_html=True)
+            break
         st.session_state.outputs[agent["id"]] = output
 
         containers[agent["id"]].markdown(f"""
 <div class="agent-card agent-done">
-    <div class="agent-name">✅ {agent['name']}</div>
+    <div class="agent-name">Done: {agent['name']}</div>
     <div class="agent-role">{agent['role']}</div>
     <div class="agent-output">{output[:400]}...</div>
 </div>""", unsafe_allow_html=True)
