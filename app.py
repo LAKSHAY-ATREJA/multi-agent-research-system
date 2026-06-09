@@ -1,16 +1,18 @@
 import os
+import re
+from datetime import datetime
+
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from datetime import datetime
 
 load_dotenv()
 
 st.set_page_config(
     page_title="Multi-Agent Research System",
-    page_icon="🤖",
+    page_icon="robot",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 st.markdown("""
@@ -39,28 +41,6 @@ st.markdown("""
     margin: 0.8rem 0.2rem 0 0.2rem;
 }
 
-.agent-pipeline {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    flex-wrap: wrap;
-}
-.agent-pill {
-    padding: 0.4rem 1rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: white;
-}
-.pill-1 { background: #e74c3c; }
-.pill-2 { background: #e67e22; }
-.pill-3 { background: #f1c40f; color: #333; }
-.pill-4 { background: #27ae60; }
-.pill-5 { background: #2980b9; }
-.arrow { color: #666; font-size: 1.2rem; }
-
 .agent-card {
     border-radius: 14px;
     padding: 1.2rem 1.5rem;
@@ -80,6 +60,11 @@ st.markdown("""
     border-color: #27ae60;
     box-shadow: 0 4px 15px rgba(39,174,96,0.15);
 }
+.agent-error {
+    background: #fef2f2;
+    border-color: #e74c3c;
+    box-shadow: 0 4px 15px rgba(231,76,60,0.15);
+}
 @keyframes pulse {
     0% { box-shadow: 0 4px 15px rgba(243,156,18,0.2); }
     50% { box-shadow: 0 4px 25px rgba(243,156,18,0.5); }
@@ -98,18 +83,19 @@ st.markdown("""
     border: 1px solid rgba(0,0,0,0.08);
     max-height: 120px;
     overflow-y: auto;
+    white-space: pre-wrap;
 }
 
-.score-display {
+.metric-box {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
     text-align: center;
-    padding: 2rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 16px;
-    color: white;
-    margin: 1rem 0;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
-.score-number { font-size: 4rem; font-weight: 800; line-height: 1; }
-.score-label { font-size: 1rem; opacity: 0.85; margin-top: 0.5rem; }
+.metric-val { font-size: 1.8rem; font-weight: 700; color: #302b63; }
+.metric-lbl { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
 
 .final-report {
     background: white;
@@ -128,191 +114,162 @@ st.markdown("""
     border-left: 3px solid #667eea;
     font-size: 0.85rem;
 }
-
-.metric-row {
-    display: flex;
-    gap: 1rem;
-    margin: 1rem 0;
-}
-.metric-box {
-    flex: 1;
-    background: white;
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    border: 1px solid #e8e8e8;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.metric-val { font-size: 1.8rem; font-weight: 700; color: #302b63; }
-.metric-lbl { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Agents config ──────────────────────────────────────────────
+
+# ---------------------------------------------------------------------------
+# Agent definitions
+# ---------------------------------------------------------------------------
+
 AGENTS = [
     {
         "id": "planner",
-        "name": "🗺️ Planner",
+        "name": "Planner",
         "role": "Breaks topic into structured research questions",
         "color": "#e74c3c",
-        "prompt": """You are a Research Planner AI. Analyse this topic and create a structured research plan.
-
-Topic: {topic}
-
-Output EXACTLY:
-RESEARCH PLAN:
-1. [Specific research question]
-2. [Specific research question]
-3. [Specific research question]
-4. [Specific research question]
-5. [Specific research question]
-
-KEY FOCUS AREAS:
-- [Area 1]
-- [Area 2]
-- [Area 3]
-
-RESEARCH APPROACH:
-[2-3 sentences on how to investigate this topic effectively]"""
+        "prompt": (
+            "You are a Research Planner AI. Analyse this topic and create a structured research plan.\n\n"
+            "Topic: {topic}\n\n"
+            "Output EXACTLY:\n"
+            "RESEARCH PLAN:\n"
+            "1. [Specific research question]\n"
+            "2. [Specific research question]\n"
+            "3. [Specific research question]\n"
+            "4. [Specific research question]\n"
+            "5. [Specific research question]\n\n"
+            "KEY FOCUS AREAS:\n"
+            "- [Area 1]\n"
+            "- [Area 2]\n"
+            "- [Area 3]\n\n"
+            "RESEARCH APPROACH:\n"
+            "[2-3 sentences on how to investigate this topic effectively]"
+        ),
     },
     {
         "id": "researcher",
-        "name": "🔬 Researcher",
+        "name": "Researcher",
         "role": "Investigates each question with detailed findings",
         "color": "#e67e22",
-        "prompt": """You are a Domain Researcher AI. Investigate each question from the research plan thoroughly.
-
-Topic: {topic}
-Research Plan: {planner}
-
-For each research question provide detailed findings. Format as:
-
-RESEARCH FINDINGS:
-
-Q1: [question]
-Findings: [detailed findings with facts, context, examples]
-
-Q2: [question]  
-Findings: [detailed findings]
-
-Q3: [question]
-Findings: [detailed findings]
-
-Q4: [question]
-Findings: [detailed findings]
-
-Q5: [question]
-Findings: [detailed findings]"""
+        "prompt": (
+            "You are a Domain Researcher AI. Investigate each question from the research plan thoroughly.\n\n"
+            "Topic: {topic}\n"
+            "Research Plan: {planner}\n\n"
+            "For each research question provide detailed findings. Format as:\n\n"
+            "RESEARCH FINDINGS:\n\n"
+            "Q1: [question]\n"
+            "Findings: [detailed findings with facts, context, examples]\n\n"
+            "Q2: [question]\n"
+            "Findings: [detailed findings]\n\n"
+            "Q3: [question]\n"
+            "Findings: [detailed findings]\n\n"
+            "Q4: [question]\n"
+            "Findings: [detailed findings]\n\n"
+            "Q5: [question]\n"
+            "Findings: [detailed findings]"
+        ),
     },
     {
         "id": "analyst",
-        "name": "📊 Analyst",
+        "name": "Analyst",
         "role": "Identifies patterns, trends and insights",
-        "color": "#f1c40f",
-        "prompt": """You are a Data Analyst AI. Analyse all research findings and extract key insights.
-
-Topic: {topic}
-Research Findings: {researcher}
-
-Provide:
-ANALYSIS REPORT:
-
-KEY PATTERNS IDENTIFIED:
-- [Pattern 1 with evidence]
-- [Pattern 2 with evidence]
-- [Pattern 3 with evidence]
-- [Pattern 4 with evidence]
-
-CRITICAL INSIGHTS:
-1. [Insight + why it matters]
-2. [Insight + why it matters]
-3. [Insight + why it matters]
-
-TREND ANALYSIS:
-[2-3 sentences on trends]
-
-CONTRADICTIONS OR GAPS:
-- [Any conflicting information or missing data]
-
-CONFIDENCE ASSESSMENT: [High/Medium/Low] — [reason]"""
+        "color": "#d4ac0d",
+        "prompt": (
+            "You are a Data Analyst AI. Analyse all research findings and extract key insights.\n\n"
+            "Topic: {topic}\n"
+            "Research Findings: {researcher}\n\n"
+            "Provide:\n"
+            "ANALYSIS REPORT:\n\n"
+            "KEY PATTERNS IDENTIFIED:\n"
+            "- [Pattern 1 with evidence]\n"
+            "- [Pattern 2 with evidence]\n"
+            "- [Pattern 3 with evidence]\n"
+            "- [Pattern 4 with evidence]\n\n"
+            "CRITICAL INSIGHTS:\n"
+            "1. [Insight + why it matters]\n"
+            "2. [Insight + why it matters]\n"
+            "3. [Insight + why it matters]\n\n"
+            "TREND ANALYSIS:\n"
+            "[2-3 sentences on trends]\n\n"
+            "CONTRADICTIONS OR GAPS:\n"
+            "- [Any conflicting information or missing data]\n\n"
+            "CONFIDENCE ASSESSMENT: [High/Medium/Low] -- [reason]"
+        ),
     },
     {
         "id": "writer",
-        "name": "✍️ Writer",
+        "name": "Writer",
         "role": "Synthesises everything into a polished report",
         "color": "#27ae60",
-        "prompt": """You are a Professional Report Writer AI. Create a comprehensive research report.
-
-Topic: {topic}
-Research Plan: {planner}
-Findings: {researcher}
-Analysis: {analyst}
-
-Write a complete professional report:
-
-# {topic}
-
-## Executive Summary
-[3-4 sentence overview of the most important conclusions]
-
-## Background & Context
-[Why this topic matters, current landscape]
-
-## Key Findings
-[5-6 major findings with supporting evidence, use bullet points]
-
-## In-Depth Analysis
-[3-4 paragraphs analysing the findings and their implications]
-
-## Implications & Applications
-[What this means in practice, who should care and why]
-
-## Conclusion
-[Clear, actionable conclusions — what does this all mean?]
-
----
-*Report generated by Multi-Agent Research System*"""
+        "prompt": (
+            "You are a Professional Report Writer AI. Create a comprehensive research report.\n\n"
+            "Topic: {topic}\n"
+            "Research Plan: {planner}\n"
+            "Findings: {researcher}\n"
+            "Analysis: {analyst}\n\n"
+            "Write a complete professional report:\n\n"
+            "# {topic}\n\n"
+            "## Executive Summary\n"
+            "[3-4 sentence overview of the most important conclusions]\n\n"
+            "## Background and Context\n"
+            "[Why this topic matters, current landscape]\n\n"
+            "## Key Findings\n"
+            "[5-6 major findings with supporting evidence, use bullet points]\n\n"
+            "## In-Depth Analysis\n"
+            "[3-4 paragraphs analysing the findings and their implications]\n\n"
+            "## Implications and Applications\n"
+            "[What this means in practice, who should care and why]\n\n"
+            "## Conclusion\n"
+            "[Clear, actionable conclusions -- what does this all mean?]\n\n"
+            "---\n"
+            "*Report generated by Multi-Agent Research System*"
+        ),
     },
     {
         "id": "critic",
-        "name": "🔍 Critic",
+        "name": "Critic",
         "role": "Reviews quality and scores the report",
         "color": "#2980b9",
-        "prompt": """You are a Quality Control AI. Rigorously review this research report.
-
-Report: {writer}
-Original Topic: {topic}
-
-Evaluate critically on 5 dimensions:
-
-QUALITY REVIEW:
-
-DIMENSION SCORES (each out of 10):
-- Completeness: [X/10] — [brief reason]
-- Accuracy & Evidence: [X/10] — [brief reason]
-- Clarity & Writing: [X/10] — [brief reason]
-- Structure & Flow: [X/10] — [brief reason]
-- Analytical Depth: [X/10] — [brief reason]
-
-OVERALL SCORE: [X/10]
-
-STRENGTHS:
-- [Specific strength]
-- [Specific strength]
-- [Specific strength]
-
-WEAKNESSES:
-- [Specific weakness]
-- [Specific weakness]
-
-MISSING ELEMENTS:
-- [What could have been included]
-
-VERDICT: [Approved for Publication / Needs Revision] — [one sentence reason]"""
-    }
+        "prompt": (
+            "You are a Quality Control AI. Rigorously review this research report.\n\n"
+            "Report: {writer}\n"
+            "Original Topic: {topic}\n\n"
+            "Evaluate critically on 5 dimensions:\n\n"
+            "QUALITY REVIEW:\n\n"
+            "DIMENSION SCORES (each out of 10):\n"
+            "- Completeness: [X/10] -- [brief reason]\n"
+            "- Accuracy & Evidence: [X/10] -- [brief reason]\n"
+            "- Clarity & Writing: [X/10] -- [brief reason]\n"
+            "- Structure & Flow: [X/10] -- [brief reason]\n"
+            "- Analytical Depth: [X/10] -- [brief reason]\n\n"
+            "OVERALL SCORE: [X/10]\n\n"
+            "STRENGTHS:\n"
+            "- [Specific strength]\n"
+            "- [Specific strength]\n"
+            "- [Specific strength]\n\n"
+            "WEAKNESSES:\n"
+            "- [Specific weakness]\n"
+            "- [Specific weakness]\n\n"
+            "MISSING ELEMENTS:\n"
+            "- [What could have been included]\n\n"
+            "VERDICT: [Approved for Publication / Needs Revision] -- [one sentence reason]"
+        ),
+    },
 ]
 
-# ── Session state ─────────────────────────────────────────────
+# Mapping from agent id to which prior outputs it needs as context
+AGENT_INPUTS: dict[str, list[str]] = {
+    "planner": [],
+    "researcher": ["planner"],
+    "analyst": ["researcher"],
+    "writer": ["planner", "researcher", "analyst"],
+    "critic": ["writer"],
+}
+
+# ---------------------------------------------------------------------------
+# Session state initialisation
+# ---------------------------------------------------------------------------
+
 if "outputs" not in st.session_state:
     st.session_state.outputs = {}
 if "final_report" not in st.session_state:
@@ -323,53 +280,92 @@ if "total_reports" not in st.session_state:
     st.session_state.total_reports = 0
 
 
-def run_agent(agent, inputs, api_key):
-    llm = ChatGroq(
+# ---------------------------------------------------------------------------
+# Core helpers
+# ---------------------------------------------------------------------------
+
+def build_llm(api_key: str) -> ChatGroq:
+    """Return a configured ChatGroq instance."""
+    return ChatGroq(
         model_name="llama3-8b-8192",
         temperature=0.4,
         groq_api_key=api_key,
-        max_tokens=1500,
+        max_tokens=2000,
     )
+
+
+def run_agent(agent: dict, inputs: dict, llm: ChatGroq) -> str:
+    """
+    Format the agent prompt with the given inputs and invoke the LLM.
+
+    Raises ValueError for missing template variables and RuntimeError for
+    any other LLM / network failures.
+    """
     try:
         prompt = agent["prompt"].format(**inputs)
-        return llm.invoke(prompt).content
     except KeyError as exc:
-        raise ValueError(f"Agent prompt missing variable: {exc}") from exc
+        raise ValueError(f"Agent '{agent['id']}' prompt missing variable: {exc}") from exc
+
+    try:
+        response = llm.invoke(prompt)
+        return response.content.strip()
     except Exception as exc:
-        raise RuntimeError(f"Agent '{agent['id']}' failed: {exc}") from exc
+        raise RuntimeError(f"Agent '{agent['id']}' LLM call failed: {exc}") from exc
 
 
 def extract_score(critic_text: str) -> int:
-    import re
-    match = re.search(r"OVERALL SCORE:\s*(\d+)\s*/\s*10", critic_text, re.IGNORECASE)
+    """
+    Parse the overall quality score from the Critic agent's output.
+    Falls back to 7 if no score can be found.
+    """
+    # Primary pattern: "OVERALL SCORE: 8/10"
+    match = re.search(r"OVERALL\s+SCORE\s*:\s*(\d+)\s*/\s*10", critic_text, re.IGNORECASE)
     if match:
-        score = int(match.group(1))
-        return max(1, min(10, score))
-    for line in critic_text.split("\n"):
-        if "OVERALL SCORE:" in line:
-            try:
-                return max(1, min(10, int(line.split(":")[-1].strip().split("/")[0].strip())))
-            except (ValueError, IndexError):
-                pass
-    return 7
+        return max(1, min(10, int(match.group(1))))
+
+    # Secondary pattern: look for a standalone number near the label
+    for line in critic_text.splitlines():
+        if "OVERALL SCORE" in line.upper():
+            numbers = re.findall(r"\b(\d{1,2})\b", line)
+            for n in numbers:
+                val = int(n)
+                if 1 <= val <= 10:
+                    return val
+
+    return 7  # sensible default
 
 
-# ── Hero ──────────────────────────────────────────────────────
+def escape_html(text: str) -> str:
+    """Minimal HTML escaping for safe injection into markdown HTML blocks."""
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+# ---------------------------------------------------------------------------
+# UI – hero
+# ---------------------------------------------------------------------------
+
 st.markdown("""
 <div class="hero">
-    <h1>🤖 Multi-Agent Research System</h1>
-    <p>5 specialised AI agents collaborate in sequence to produce comprehensive, quality-scored research reports</p>
+    <h1>Multi-Agent Research System</h1>
+    <p>Five specialised AI agents collaborate in sequence to produce comprehensive, quality-scored research reports</p>
     <div>
-        <span class="badge">🗺️ Planner</span>
-        <span class="badge">🔬 Researcher</span>
-        <span class="badge">📊 Analyst</span>
-        <span class="badge">✍️ Writer</span>
-        <span class="badge">🔍 Critic</span>
+        <span class="badge">Planner</span>
+        <span class="badge">Researcher</span>
+        <span class="badge">Analyst</span>
+        <span class="badge">Writer</span>
+        <span class="badge">Critic</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ── Sidebar ───────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# UI – sidebar
+# ---------------------------------------------------------------------------
+
 with st.sidebar:
     st.header("Configuration")
     _env_key = os.getenv("GROQ_API_KEY", "")
@@ -378,168 +374,222 @@ with st.sidebar:
         value=_env_key,
         type="password",
         placeholder="gsk_...",
-        help="Get a free key at console.groq.com. Can also be set via GROQ_API_KEY env var.",
+        help="Get a free key at console.groq.com. Can also be set via GROQ_API_KEY in .env.",
     )
 
     st.divider()
-    st.header("🏗️ Agent Pipeline")
+    st.header("Agent Pipeline")
     for agent in AGENTS:
         st.markdown(f"**{agent['name']}** — {agent['role']}")
 
     st.divider()
-    st.header("📊 Session Stats")
-    col1, col2 = st.columns(2)
-    col1.metric("Reports", st.session_state.total_reports)
-    col2.metric("History", len(st.session_state.history))
+    st.header("Session Stats")
+    col_s1, col_s2 = st.columns(2)
+    col_s1.metric("Reports", st.session_state.total_reports)
+    col_s2.metric("History", len(st.session_state.history))
 
     if st.session_state.history:
         st.divider()
-        st.header("📚 Recent Research")
+        st.header("Recent Research")
         for item in reversed(st.session_state.history[-5:]):
-            score_emoji = "🟢" if item["score"] >= 8 else "🟡" if item["score"] >= 6 else "🔴"
-            st.markdown(f"""
-<div class="history-item">
-    {score_emoji} <strong>{item['score']}/10</strong><br>
-    {item['topic'][:45]}...<br>
-    <small style="color:#888">{item['time']}</small>
-</div>""", unsafe_allow_html=True)
+            score_label = "High" if item["score"] >= 8 else "Mid" if item["score"] >= 6 else "Low"
+            topic_preview = item["topic"][:50] + ("..." if len(item["topic"]) > 50 else "")
+            st.markdown(
+                f'<div class="history-item">'
+                f'<strong>{item["score"]}/10</strong> ({score_label})<br>'
+                f"{escape_html(topic_preview)}<br>"
+                f'<small style="color:#888">{item["time"]}</small>'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
 
     if st.session_state.final_report:
         st.divider()
         st.download_button(
-            "💾 Download Report",
+            "Download Report",
             st.session_state.final_report,
             file_name=f"research_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
             mime="text/markdown",
-            use_container_width=True
+            use_container_width=True,
         )
 
-# ── Main ──────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# UI – main input
+# ---------------------------------------------------------------------------
+
 if not api_key:
-    st.info("👈 Enter your free Groq API key in the sidebar to begin. Get one at [console.groq.com](https://console.groq.com)")
+    st.info(
+        "Enter your free Groq API key in the sidebar to get started. "
+        "Get one at [console.groq.com](https://console.groq.com)."
+    )
     st.stop()
 
-col1, col2 = st.columns([5, 1])
-with col1:
+col_inp, col_btn = st.columns([5, 1])
+with col_inp:
     topic = st.text_input(
         "Research Topic",
         placeholder="e.g. 'The impact of multi-agent AI systems on enterprise document processing'",
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
-with col2:
-    go = st.button("🚀 Research", use_container_width=True, type="primary")
+with col_btn:
+    go = st.button("Research", use_container_width=True, type="primary")
 
-# Example topics
-st.caption("💡 Try: *'Future of RAG systems in enterprise AI'* or *'Comparing LLM architectures for production systems'*")
+st.caption(
+    "Example topics: 'Future of RAG systems in enterprise AI' or "
+    "'Comparing LLM architectures for production systems'"
+)
+
+# ---------------------------------------------------------------------------
+# UI – pipeline execution
+# ---------------------------------------------------------------------------
 
 if go and topic.strip():
     st.session_state.outputs = {}
     st.session_state.final_report = None
 
     st.divider()
-    st.subheader("⚡ Live Agent Pipeline")
+    st.subheader("Live Agent Pipeline")
 
     containers = {a["id"]: st.empty() for a in AGENTS}
-    inputs = {"topic": topic}
+    llm = build_llm(api_key)
+    inputs: dict[str, str] = {"topic": topic.strip()}
+    pipeline_failed = False
 
     for i, agent in enumerate(AGENTS):
-
-        # Render all cards
+        # Render current status of all cards
         for j, a in enumerate(AGENTS):
+            out_preview = escape_html(st.session_state.outputs.get(a["id"], "")[:400])
             if j < i:
-                out = st.session_state.outputs.get(a["id"], "")
-                containers[a["id"]].markdown(f"""
-<div class="agent-card agent-done">
-    <div class="agent-name">✅ {a['name']}</div>
-    <div class="agent-role">{a['role']}</div>
-    <div class="agent-output">{out[:400]}...</div>
-</div>""", unsafe_allow_html=True)
+                containers[a["id"]].markdown(
+                    f'<div class="agent-card agent-done">'
+                    f'<div class="agent-name">Done: {a["name"]}</div>'
+                    f'<div class="agent-role">{a["role"]}</div>'
+                    f'<div class="agent-output">{out_preview}...</div>'
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
             elif j == i:
-                containers[a["id"]].markdown(f"""
-<div class="agent-card agent-running">
-    <div class="agent-name">⚡ {a['name']} — Working...</div>
-    <div class="agent-role">{a['role']}</div>
-</div>""", unsafe_allow_html=True)
+                containers[a["id"]].markdown(
+                    f'<div class="agent-card agent-running">'
+                    f'<div class="agent-name">{a["name"]} -- Working...</div>'
+                    f'<div class="agent-role">{a["role"]}</div>'
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
             else:
-                containers[a["id"]].markdown(f"""
-<div class="agent-card agent-waiting">
-    <div class="agent-name">⏳ {a['name']}</div>
-    <div class="agent-role">{a['role']}</div>
-</div>""", unsafe_allow_html=True)
+                containers[a["id"]].markdown(
+                    f'<div class="agent-card agent-waiting">'
+                    f'<div class="agent-name">{a["name"]}</div>'
+                    f'<div class="agent-role">{a["role"]}</div>'
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
 
-        # Build inputs
-        if agent["id"] == "researcher":
-            inputs["planner"] = st.session_state.outputs.get("planner", "")
-        elif agent["id"] == "analyst":
-            inputs["planner"] = st.session_state.outputs.get("planner", "")
-            inputs["researcher"] = st.session_state.outputs.get("researcher", "")
-        elif agent["id"] == "writer":
-            inputs["planner"] = st.session_state.outputs.get("planner", "")
-            inputs["researcher"] = st.session_state.outputs.get("researcher", "")
-            inputs["analyst"] = st.session_state.outputs.get("analyst", "")
-        elif agent["id"] == "critic":
-            inputs["writer"] = st.session_state.outputs.get("writer", "")
+        # Inject required prior outputs into inputs dict
+        for dep in AGENT_INPUTS.get(agent["id"], []):
+            inputs[dep] = st.session_state.outputs.get(dep, "")
 
         try:
-            output = run_agent(agent, inputs, api_key)
-        except Exception as exc:
+            output = run_agent(agent, inputs, llm)
+        except (ValueError, RuntimeError) as exc:
             st.error(f"Agent '{agent['name']}' failed: {exc}")
-            containers[agent["id"]].markdown(f"""
-<div class="agent-card" style="background:#fef2f2;border:1px solid #e74c3c;border-radius:14px;padding:1.2rem 1.5rem;margin:0.6rem 0;">
-    <div class="agent-name" style="color:#e74c3c;">Failed: {agent['name']}</div>
-    <div class="agent-role">{exc}</div>
-</div>""", unsafe_allow_html=True)
+            containers[agent["id"]].markdown(
+                f'<div class="agent-card agent-error">'
+                f'<div class="agent-name" style="color:#e74c3c;">Failed: {agent["name"]}</div>'
+                f'<div class="agent-role">{escape_html(str(exc))}</div>'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+            pipeline_failed = True
             break
+
         st.session_state.outputs[agent["id"]] = output
+        out_preview = escape_html(output[:400])
+        containers[agent["id"]].markdown(
+            f'<div class="agent-card agent-done">'
+            f'<div class="agent-name">Done: {agent["name"]}</div>'
+            f'<div class="agent-role">{agent["role"]}</div>'
+            f'<div class="agent-output">{out_preview}...</div>'
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
-        containers[agent["id"]].markdown(f"""
-<div class="agent-card agent-done">
-    <div class="agent-name">Done: {agent['name']}</div>
-    <div class="agent-role">{agent['role']}</div>
-    <div class="agent-output">{output[:400]}...</div>
-</div>""", unsafe_allow_html=True)
+    if not pipeline_failed:
+        final_report = st.session_state.outputs.get("writer", "")
+        critic_output = st.session_state.outputs.get("critic", "")
+        score = extract_score(critic_output)
 
-    # Final report
-    st.session_state.final_report = st.session_state.outputs.get("writer", "")
-    score = extract_score(st.session_state.outputs.get("critic", ""))
-    st.session_state.total_reports += 1
-    st.session_state.history.append({
-        "topic": topic,
-        "score": score,
-        "time": datetime.now().strftime("%H:%M")
-    })
+        st.session_state.final_report = final_report
+        st.session_state.total_reports += 1
+        st.session_state.history.append(
+            {
+                "topic": topic.strip(),
+                "score": score,
+                "time": datetime.now().strftime("%H:%M"),
+            }
+        )
 
-    st.divider()
+        st.divider()
 
-    # Score + metrics
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        color = "#27ae60" if score >= 8 else "#f39c12" if score >= 6 else "#e74c3c"
-        st.markdown(f'<div class="metric-box"><div class="metric-val" style="color:{color}">{score}/10</div><div class="metric-lbl">Quality Score</div></div>', unsafe_allow_html=True)
-    with col2:
-        st.markdown(f'<div class="metric-box"><div class="metric-val">5</div><div class="metric-lbl">Agents Used</div></div>', unsafe_allow_html=True)
-    with col3:
-        word_count = len(st.session_state.final_report.split())
-        st.markdown(f'<div class="metric-box"><div class="metric-val">{word_count}</div><div class="metric-lbl">Words Generated</div></div>', unsafe_allow_html=True)
+        # Metrics row
+        col_m1, col_m2, col_m3 = st.columns(3)
+        score_color = "#27ae60" if score >= 8 else "#f39c12" if score >= 6 else "#e74c3c"
+        word_count = len(final_report.split())
 
-    st.subheader("📋 Final Research Report")
-    tab1, tab2, tab3 = st.tabs(["📄 Report", "🔍 Quality Review", "🔬 All Agent Outputs"])
+        with col_m1:
+            st.markdown(
+                f'<div class="metric-box">'
+                f'<div class="metric-val" style="color:{score_color}">{score}/10</div>'
+                f'<div class="metric-lbl">Quality Score</div>'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+        with col_m2:
+            st.markdown(
+                '<div class="metric-box">'
+                '<div class="metric-val">5</div>'
+                '<div class="metric-lbl">Agents Used</div>'
+                "</div>",
+                unsafe_allow_html=True,
+            )
+        with col_m3:
+            st.markdown(
+                f'<div class="metric-box">'
+                f'<div class="metric-val">{word_count:,}</div>'
+                f'<div class="metric-lbl">Words Generated</div>'
+                f"</div>",
+                unsafe_allow_html=True,
+            )
 
-    with tab1:
-        st.markdown(f'<div class="final-report">{st.session_state.final_report.replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.download_button("💾 Download as Markdown", st.session_state.final_report,
-                               file_name=f"research_{datetime.now().strftime('%Y%m%d_%H%M')}.md", use_container_width=True)
-        with col2:
-            st.download_button("📋 Download as Text", st.session_state.final_report,
-                               file_name=f"research_{datetime.now().strftime('%Y%m%d_%H%M')}.txt", use_container_width=True)
+        # Tabbed output
+        st.subheader("Final Research Report")
+        tab_report, tab_review, tab_all = st.tabs(["Report", "Quality Review", "All Agent Outputs"])
 
-    with tab2:
-        critic_out = st.session_state.outputs.get("critic", "")
-        st.markdown(f'<div class="final-report">{critic_out.replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
+        with tab_report:
+            st.markdown(final_report, unsafe_allow_html=False)
+            dl_col1, dl_col2 = st.columns(2)
+            with dl_col1:
+                st.download_button(
+                    "Download as Markdown",
+                    final_report,
+                    file_name=f"research_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
+                    mime="text/markdown",
+                    use_container_width=True,
+                )
+            with dl_col2:
+                st.download_button(
+                    "Download as Text",
+                    final_report,
+                    file_name=f"research_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                    mime="text/plain",
+                    use_container_width=True,
+                )
 
-    with tab3:
-        for agent in AGENTS:
-            with st.expander(f"{agent['name']} — Full Output"):
-                st.text(st.session_state.outputs.get(agent["id"], "Not run yet"))
+        with tab_review:
+            st.markdown(critic_output if critic_output else "_No critic output available._")
+
+        with tab_all:
+            for agent in AGENTS:
+                with st.expander(f"{agent['name']} -- Full Output"):
+                    agent_out = st.session_state.outputs.get(agent["id"], "Not run yet.")
+                    st.text(agent_out)
