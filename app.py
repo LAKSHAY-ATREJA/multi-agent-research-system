@@ -518,15 +518,16 @@ if not api_key:
     )
     st.stop()
 
-col_inp, col_btn = st.columns([5, 1])
-with col_inp:
-    topic = st.text_input(
-        "Research Topic",
-        placeholder="e.g. 'The impact of multi-agent AI systems on enterprise document processing'",
-        label_visibility="collapsed",
-    )
-with col_btn:
-    go = st.button("Research", use_container_width=True, type="primary")
+with st.form("research_form", enter_to_submit=True):
+    col_inp, col_btn = st.columns([5, 1])
+    with col_inp:
+        topic = st.text_input(
+            "Research Topic",
+            placeholder="e.g. 'The impact of multi-agent AI systems on enterprise document processing'",
+            label_visibility="collapsed",
+        )
+    with col_btn:
+        go = st.form_submit_button("Research", use_container_width=True, type="primary")
 
 st.caption(
     "Example topics: 'Future of RAG systems in enterprise AI' or "
