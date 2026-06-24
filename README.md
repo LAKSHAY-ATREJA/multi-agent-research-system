@@ -1,6 +1,6 @@
 # Multi-Agent Research System
 
-Live demo: coming soon
+Live demo: https://multi-agent-research-system-2t5pmhlpj9ks9we43dp6f7.streamlit.app/ 
 
 A Streamlit web application where five specialised AI agents collaborate in a fixed sequential pipeline to produce comprehensive, quality-scored research reports on any topic. Each agent has a distinct responsibility: planning, researching, analysing, writing, and quality-reviewing. All inference runs on Groq's free API using Llama 3 8B.
 
