@@ -81,7 +81,7 @@ st.markdown("""
     font-size: 0.85rem;
     color: #444;
     border: 1px solid rgba(0,0,0,0.08);
-    max-height: 120px;
+    max-height: 600px;
     overflow-y: auto;
     white-space: pre-wrap;
 }
@@ -129,21 +129,42 @@ AGENTS = [
         "role": "Breaks topic into structured research questions",
         "color": "#e74c3c",
         "prompt": (
-            "You are a Research Planner AI. Analyse this topic and create a structured research plan.\n\n"
+            "You are a Research Planner AI. Analyse this topic and create a comprehensive, detailed research plan.\n\n"
             "Topic: {topic}\n\n"
-            "Output EXACTLY:\n"
+            "Output EXACTLY the following structure. Each research question MUST include a 2-3 sentence context "
+            "explaining why this question matters and what angle to investigate:\n\n"
             "RESEARCH PLAN:\n"
             "1. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
             "2. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
             "3. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
             "4. [Specific research question]\n"
-            "5. [Specific research question]\n\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
+            "5. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
+            "6. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
+            "7. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
+            "8. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
+            "9. [Specific research question]\n"
+            "   Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
+            "10. [Specific research question]\n"
+            "    Context: [2-3 sentences explaining why this question is important and what specific aspects to explore]\n\n"
             "KEY FOCUS AREAS:\n"
-            "- [Area 1]\n"
-            "- [Area 2]\n"
-            "- [Area 3]\n\n"
+            "- [Area 1 with explanation]\n"
+            "- [Area 2 with explanation]\n"
+            "- [Area 3 with explanation]\n"
+            "- [Area 4 with explanation]\n"
+            "- [Area 5 with explanation]\n\n"
             "RESEARCH APPROACH:\n"
-            "[2-3 sentences on how to investigate this topic effectively]"
+            "[4-5 sentences on how to investigate this topic effectively, what sources and methods to use, "
+            "and what interdisciplinary angles to consider]\n\n"
+            "EXPECTED OUTCOMES:\n"
+            "[3-4 sentences describing what the research should ultimately reveal or achieve]"
         ),
     },
     {
@@ -152,21 +173,31 @@ AGENTS = [
         "role": "Investigates each question with detailed findings",
         "color": "#e67e22",
         "prompt": (
-            "You are a Domain Researcher AI. Investigate each question from the research plan thoroughly.\n\n"
+            "You are a Domain Researcher AI. Investigate each question from the research plan with exceptional depth and detail.\n\n"
             "Topic: {topic}\n"
             "Research Plan: {planner}\n\n"
-            "For each research question provide detailed findings. Format as:\n\n"
+            "IMPORTANT: Each question MUST receive a minimum of 500 words of detailed findings. Include specific facts, "
+            "statistics, real-world examples, case studies, expert perspectives, and supporting evidence. "
+            "Do not be superficial — go deep into every question.\n\n"
+            "For each research question provide comprehensive findings. Format as:\n\n"
             "RESEARCH FINDINGS:\n\n"
             "Q1: [question]\n"
-            "Findings: [detailed findings with facts, context, examples]\n\n"
+            "Findings: [Minimum 500 words. Cover background context, current state, key facts and statistics, "
+            "real-world examples or case studies, different perspectives, challenges, and implications. "
+            "Use specific data points and concrete examples wherever possible.]\n\n"
             "Q2: [question]\n"
-            "Findings: [detailed findings]\n\n"
+            "Findings: [Minimum 500 words with the same depth — facts, examples, evidence, multiple angles.]\n\n"
             "Q3: [question]\n"
-            "Findings: [detailed findings]\n\n"
+            "Findings: [Minimum 500 words with the same depth — facts, examples, evidence, multiple angles.]\n\n"
             "Q4: [question]\n"
-            "Findings: [detailed findings]\n\n"
+            "Findings: [Minimum 500 words with the same depth — facts, examples, evidence, multiple angles.]\n\n"
             "Q5: [question]\n"
-            "Findings: [detailed findings]"
+            "Findings: [Minimum 500 words with the same depth — facts, examples, evidence, multiple angles.]\n\n"
+            "Q6: [question]\n"
+            "Findings: [Minimum 500 words with the same depth — facts, examples, evidence, multiple angles.]\n\n"
+            "SYNTHESIS:\n"
+            "[3-4 paragraphs drawing connections across all the findings, identifying common themes, "
+            "surprising discoveries, and areas that require further investigation.]"
         ),
     },
     {
@@ -175,25 +206,40 @@ AGENTS = [
         "role": "Identifies patterns, trends and insights",
         "color": "#d4ac0d",
         "prompt": (
-            "You are a Data Analyst AI. Analyse all research findings and extract key insights.\n\n"
+            "You are a Data Analyst AI. Analyse all research findings and extract deep, comprehensive insights.\n\n"
             "Topic: {topic}\n"
             "Research Findings: {researcher}\n\n"
+            "IMPORTANT: Your total analysis MUST be a minimum of 600 words. Every section must be substantive, "
+            "evidence-backed, and analytically rigorous. Avoid superficial observations — dig into root causes, "
+            "second-order effects, and non-obvious connections.\n\n"
             "Provide:\n"
             "ANALYSIS REPORT:\n\n"
             "KEY PATTERNS IDENTIFIED:\n"
-            "- [Pattern 1 with evidence]\n"
-            "- [Pattern 2 with evidence]\n"
-            "- [Pattern 3 with evidence]\n"
-            "- [Pattern 4 with evidence]\n\n"
+            "- [Pattern 1]: [3-5 sentences explaining the pattern, its evidence across the findings, and its significance]\n"
+            "- [Pattern 2]: [3-5 sentences explaining the pattern, its evidence across the findings, and its significance]\n"
+            "- [Pattern 3]: [3-5 sentences explaining the pattern, its evidence across the findings, and its significance]\n"
+            "- [Pattern 4]: [3-5 sentences explaining the pattern, its evidence across the findings, and its significance]\n"
+            "- [Pattern 5]: [3-5 sentences explaining the pattern, its evidence across the findings, and its significance]\n"
+            "- [Pattern 6]: [3-5 sentences explaining the pattern, its evidence across the findings, and its significance]\n\n"
             "CRITICAL INSIGHTS:\n"
-            "1. [Insight + why it matters]\n"
-            "2. [Insight + why it matters]\n"
-            "3. [Insight + why it matters]\n\n"
+            "1. [Insight title]: [2-3 paragraphs exploring why this matters, its implications, and what it means for the future]\n"
+            "2. [Insight title]: [2-3 paragraphs exploring why this matters, its implications, and what it means for the future]\n"
+            "3. [Insight title]: [2-3 paragraphs exploring why this matters, its implications, and what it means for the future]\n"
+            "4. [Insight title]: [2-3 paragraphs exploring why this matters, its implications, and what it means for the future]\n\n"
             "TREND ANALYSIS:\n"
-            "[2-3 sentences on trends]\n\n"
+            "[Full paragraph (minimum 150 words) on current trends, trajectory, and where things are headed over the next 3-5 years. "
+            "Include specific drivers and inhibitors of each trend.]\n\n"
+            "COMPARATIVE ANALYSIS:\n"
+            "[2-3 paragraphs comparing different approaches, schools of thought, or solutions identified in the research. "
+            "What are the trade-offs? Which approaches show the most promise?]\n\n"
             "CONTRADICTIONS OR GAPS:\n"
-            "- [Any conflicting information or missing data]\n\n"
-            "CONFIDENCE ASSESSMENT: [High/Medium/Low] -- [reason]"
+            "- [Contradiction/gap 1 with explanation of why it exists and what it means]\n"
+            "- [Contradiction/gap 2 with explanation of why it exists and what it means]\n"
+            "- [Contradiction/gap 3 with explanation of why it exists and what it means]\n\n"
+            "STRATEGIC IMPLICATIONS:\n"
+            "[2-3 paragraphs on what decision-makers, practitioners, or researchers should do given these findings]\n\n"
+            "CONFIDENCE ASSESSMENT: [High/Medium/Low] -- [3-4 sentences explaining the confidence level, "
+            "what would increase or decrease it, and what additional data would be most valuable]"
         ),
     },
     {
@@ -202,25 +248,55 @@ AGENTS = [
         "role": "Synthesises everything into a polished report",
         "color": "#27ae60",
         "prompt": (
-            "You are a Professional Report Writer AI. Create a comprehensive research report.\n\n"
+            "You are a Professional Report Writer AI. Create an exceptionally comprehensive, publication-quality research report.\n\n"
             "Topic: {topic}\n"
             "Research Plan: {planner}\n"
             "Findings: {researcher}\n"
             "Analysis: {analyst}\n\n"
-            "Write a complete professional report:\n\n"
+            "IMPORTANT: This report MUST be a minimum of 3000-4000 words. Every section must be fully developed with "
+            "rich content, detailed explanations, concrete examples, and substantive analysis. Do not use placeholders "
+            "or brief summaries — write complete, polished prose throughout. Use all available findings and analysis.\n\n"
+            "Write a complete professional report using this structure:\n\n"
             "# {topic}\n\n"
             "## Executive Summary\n"
-            "[3-4 sentence overview of the most important conclusions]\n\n"
+            "[3-4 substantial paragraphs covering: the scope and purpose of this research, the most critical findings, "
+            "key analytical insights, and the primary recommendations or conclusions. This section alone should be 250-300 words.]\n\n"
             "## Background and Context\n"
-            "[Why this topic matters, current landscape]\n\n"
+            "[2-3 full paragraphs covering: historical background, why this topic matters now, the current landscape, "
+            "key stakeholders affected, and the broader significance. Minimum 300 words.]\n\n"
+            "## Research Scope and Methodology\n"
+            "[1-2 paragraphs explaining what questions were investigated, the research approach taken, "
+            "and the framework used to analyse the findings. Minimum 150 words.]\n\n"
             "## Key Findings\n"
-            "[5-6 major findings with supporting evidence, use bullet points]\n\n"
+            "[8-10 major findings, each presented as a subheading with 2-3 sentences of explanation and supporting evidence. "
+            "Minimum 400 words total for this section.]\n\n"
             "## In-Depth Analysis\n"
-            "[3-4 paragraphs analysing the findings and their implications]\n\n"
+            "### Patterns and Trends\n"
+            "[2-3 full paragraphs analysing the dominant patterns identified. Minimum 250 words.]\n\n"
+            "### Critical Insights\n"
+            "[2-3 full paragraphs on the most important non-obvious insights. Minimum 250 words.]\n\n"
+            "### Comparative Perspectives\n"
+            "[1-2 paragraphs comparing different viewpoints, approaches, or schools of thought. Minimum 200 words.]\n\n"
+            "### Challenges and Limitations\n"
+            "[1-2 paragraphs on key challenges, obstacles, and limitations identified. Minimum 150 words.]\n\n"
             "## Implications and Applications\n"
-            "[What this means in practice, who should care and why]\n\n"
+            "### For Practitioners\n"
+            "[1-2 paragraphs on practical implications for those working in this area. Minimum 150 words.]\n\n"
+            "### For Decision-Makers\n"
+            "[1-2 paragraphs on strategic implications for leaders and decision-makers. Minimum 150 words.]\n\n"
+            "### For Researchers\n"
+            "[1-2 paragraphs on implications for future research and knowledge gaps. Minimum 150 words.]\n\n"
+            "## Future Outlook\n"
+            "[2-3 paragraphs on where this topic is heading, emerging developments to watch, and what the next 3-5 years "
+            "may look like. Minimum 250 words.]\n\n"
+            "## Recommendations\n"
+            "[6-8 specific, actionable recommendations based on the research. Each recommendation should have a brief "
+            "rationale. Minimum 300 words total.]\n\n"
             "## Conclusion\n"
-            "[Clear, actionable conclusions -- what does this all mean?]\n\n"
+            "[2-3 paragraphs that synthesise the entire report into a coherent narrative conclusion. Restate the most "
+            "important insights and their significance. End with a forward-looking statement. Minimum 200 words.]\n\n"
+            "## References and Further Reading\n"
+            "[List 8-10 types of sources or specific works that would be valuable for deeper research on this topic.]\n\n"
             "---\n"
             "*Report generated by Multi-Agent Research System*"
         ),
@@ -231,28 +307,46 @@ AGENTS = [
         "role": "Reviews quality and scores the report",
         "color": "#2980b9",
         "prompt": (
-            "You are a Quality Control AI. Rigorously review this research report.\n\n"
+            "You are a Quality Control AI. Conduct a rigorous, detailed review of this research report.\n\n"
             "Report: {writer}\n"
             "Original Topic: {topic}\n\n"
-            "Evaluate critically on 5 dimensions:\n\n"
+            "IMPORTANT: Your quality review MUST be a minimum of 400 words. Each dimension score must be accompanied "
+            "by a detailed explanation of 3-5 sentences. Be specific — cite actual passages from the report, "
+            "identify exact weaknesses, and provide actionable feedback.\n\n"
             "QUALITY REVIEW:\n\n"
             "DIMENSION SCORES (each out of 10):\n"
-            "- Completeness: [X/10] -- [brief reason]\n"
-            "- Accuracy & Evidence: [X/10] -- [brief reason]\n"
-            "- Clarity & Writing: [X/10] -- [brief reason]\n"
-            "- Structure & Flow: [X/10] -- [brief reason]\n"
-            "- Analytical Depth: [X/10] -- [brief reason]\n\n"
+            "- Completeness: [X/10] -- [3-5 sentences: What does the report cover well? What important aspects "
+            "of the topic are missing or underdeveloped? How well does it address the original research questions?]\n\n"
+            "- Accuracy & Evidence: [X/10] -- [3-5 sentences: How well are claims supported by evidence? "
+            "Are there unsupported assertions? Does the evidence used appear credible and relevant?]\n\n"
+            "- Clarity & Writing: [X/10] -- [3-5 sentences: How clear and readable is the writing? "
+            "Are there sections that are confusing, overly technical, or too vague? What is the overall writing quality?]\n\n"
+            "- Structure & Flow: [X/10] -- [3-5 sentences: How well is the report organised? "
+            "Does it flow logically from section to section? Are headings used effectively? Does the structure serve the content?]\n\n"
+            "- Analytical Depth: [X/10] -- [3-5 sentences: How deep is the analysis? Does the report go beyond "
+            "surface observations? Are the insights genuinely valuable and non-obvious?]\n\n"
+            "- Practical Value: [X/10] -- [3-5 sentences: How useful are the recommendations? "
+            "Can practitioners actually act on them? Are the implications clearly explained?]\n\n"
             "OVERALL SCORE: [X/10]\n\n"
-            "STRENGTHS:\n"
-            "- [Specific strength]\n"
-            "- [Specific strength]\n"
-            "- [Specific strength]\n\n"
-            "WEAKNESSES:\n"
-            "- [Specific weakness]\n"
-            "- [Specific weakness]\n\n"
+            "DETAILED STRENGTHS:\n"
+            "- [Strength 1]: [2-3 sentences explaining what works well and why it adds value]\n"
+            "- [Strength 2]: [2-3 sentences explaining what works well and why it adds value]\n"
+            "- [Strength 3]: [2-3 sentences explaining what works well and why it adds value]\n"
+            "- [Strength 4]: [2-3 sentences explaining what works well and why it adds value]\n\n"
+            "DETAILED WEAKNESSES:\n"
+            "- [Weakness 1]: [2-3 sentences explaining what is weak, why it matters, and how to fix it]\n"
+            "- [Weakness 2]: [2-3 sentences explaining what is weak, why it matters, and how to fix it]\n"
+            "- [Weakness 3]: [2-3 sentences explaining what is weak, why it matters, and how to fix it]\n\n"
             "MISSING ELEMENTS:\n"
-            "- [What could have been included]\n\n"
-            "VERDICT: [Approved for Publication / Needs Revision] -- [one sentence reason]"
+            "- [Missing element 1]: [What it is, why it should be included, and how it would improve the report]\n"
+            "- [Missing element 2]: [What it is, why it should be included, and how it would improve the report]\n"
+            "- [Missing element 3]: [What it is, why it should be included, and how it would improve the report]\n\n"
+            "SPECIFIC RECOMMENDATIONS FOR IMPROVEMENT:\n"
+            "1. [Concrete, actionable recommendation with explanation]\n"
+            "2. [Concrete, actionable recommendation with explanation]\n"
+            "3. [Concrete, actionable recommendation with explanation]\n\n"
+            "VERDICT: [Approved for Publication / Needs Minor Revision / Needs Major Revision] -- "
+            "[2-3 sentences explaining the verdict, the primary reason, and the most critical next step]"
         ),
     },
 ]
@@ -290,7 +384,7 @@ def build_llm(api_key: str) -> ChatGroq:
         model_name="llama-3.3-70b-versatile",
         temperature=0.4,
         groq_api_key=api_key,
-        max_tokens=2000,
+        max_tokens=4000,
     )
 
 
@@ -458,13 +552,13 @@ if go and topic.strip():
     for i, agent in enumerate(AGENTS):
         # Render current status of all cards
         for j, a in enumerate(AGENTS):
-            out_preview = escape_html(st.session_state.outputs.get(a["id"], "")[:400])
+            out_preview = escape_html(st.session_state.outputs.get(a["id"], ""))
             if j < i:
                 containers[a["id"]].markdown(
                     f'<div class="agent-card agent-done">'
                     f'<div class="agent-name">Done: {a["name"]}</div>'
                     f'<div class="agent-role">{a["role"]}</div>'
-                    f'<div class="agent-output">{out_preview}...</div>'
+                    f'<div class="agent-output">{out_preview}</div>'
                     f"</div>",
                     unsafe_allow_html=True,
                 )
@@ -504,12 +598,12 @@ if go and topic.strip():
             break
 
         st.session_state.outputs[agent["id"]] = output
-        out_preview = escape_html(output[:400])
+        out_preview = escape_html(output)
         containers[agent["id"]].markdown(
             f'<div class="agent-card agent-done">'
             f'<div class="agent-name">Done: {agent["name"]}</div>'
             f'<div class="agent-role">{agent["role"]}</div>'
-            f'<div class="agent-output">{out_preview}...</div>'
+            f'<div class="agent-output">{out_preview}</div>'
             f"</div>",
             unsafe_allow_html=True,
         )
