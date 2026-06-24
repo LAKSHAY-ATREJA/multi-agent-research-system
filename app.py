@@ -287,7 +287,7 @@ if "total_reports" not in st.session_state:
 def build_llm(api_key: str) -> ChatGroq:
     """Return a configured ChatGroq instance."""
     return ChatGroq(
-        model_name="llama3-8b-8192",
+        model_name="llama-3.3-70b-versatile",
         temperature=0.4,
         groq_api_key=api_key,
         max_tokens=2000,
