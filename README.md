@@ -1,6 +1,32 @@
 # Multi-Agent Research System
 
+Live demo: coming soon
+
 A Streamlit web application where five specialised AI agents collaborate in a fixed sequential pipeline to produce comprehensive, quality-scored research reports on any topic. Each agent has a distinct responsibility: planning, researching, analysing, writing, and quality-reviewing. All inference runs on Groq's free API using Llama 3 8B.
+
+## Architecture
+
+```
+Topic Input
+     |
+     v
+[PLANNER] -- decomposes the topic into research questions and defines an approach
+     |
+     v
+[RESEARCHER] -- investigates each question in depth with facts, context, and examples
+     |
+     v
+[ANALYST] -- identifies patterns, trends, contradictions, and assigns a confidence level
+     |
+     v
+[WRITER] -- synthesises all prior outputs into a structured report
+     |
+     v
+[CRITIC] -- scores the report across five quality dimensions and issues a verdict
+     |
+     v
+Final Report (Markdown or plain text, quality-scored)
+```
 
 ## How it works
 
